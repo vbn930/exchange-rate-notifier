@@ -19,14 +19,14 @@ public class ExchangeAPIClient
     {
         _apiRequestWrapper = apiRequestWrapper;
         _token = token;
-        _apiRequestUrl = $"https://openexchangerates.org/api/latest.json?app_id={token}&base=USD&prettyprint=true&show_alternative=false";
+        _apiRequestUrl = $"https://openexchangerates.org/api/latest.json?app_id={_token}&base=USD&prettyprint=true&show_alternative=false";
         _dataStack = new List<ExchangeRateData>();
     }
 
     private async Task<string> RequestExchangeRateDataAsync()
     {
         string? res = await _apiRequestWrapper.GetAsync(_apiRequestUrl);
-        if (res == null) { throw new ArgumentNullException("Response is null"); }
+        if (res == null) { throw new ArgumentNullException("Failed to API request"); }
 
         return res;
     }
@@ -34,20 +34,13 @@ public class ExchangeAPIClient
     public async Task<ExchangeRateData> GetExchangeRateDataAsync()
     {
         string res = await RequestExchangeRateDataAsync();
+        Console.WriteLine(res);
         ExchangeRateData? data = JsonSerializer.Deserialize<ExchangeRateData>(res);
-        if (data != null)
-        {
-            Console.WriteLine($"Timestamp: {data.Timestamp}");
-            Console.WriteLine($"Rate: 1USD->{data.Rates["KRW"]}₩");
 
-            _dataStack.Add(data);
-            return data;
-        }
-        else
-        {
-            Console.WriteLine("API Result is NULL");
-            throw new ArgumentException("Failed to get exchange data");
-        }
+        if (data == null) { throw new ArgumentNullException("Failed to get exchange data"); }
+
+        _dataStack.Add(data);
+        return data;
     }
 
     public async Task SaveDataStackIntoDB()

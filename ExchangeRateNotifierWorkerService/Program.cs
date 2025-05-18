@@ -24,6 +24,9 @@ if (data != null)
 {
     Console.WriteLine($"Timestamp: {data.Timestamp}");
     Console.WriteLine($"Rate: 1USD->{data.Rates["KRW"]}₩");
+
+    var eur = CurrencyConvertor.ConvertToKRW(data, "EUR");
+    Console.WriteLine($"Rate: 1EUR->{eur}₩");
 }
 else
 {
