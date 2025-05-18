@@ -1,6 +1,7 @@
 using ExchangeRateNotifierWorkerService;
 using ExchangeRateNotifierWorkerService.Services;
 using ExchangeRateNotifierWorkerService.Dtos;
+using ExchangeRateNotifierWorkerService.Clients;
 
 using System.Net.Http;
 using System.Text.Json;
@@ -15,12 +16,10 @@ string url = $"https://openexchangerates.org/api/latest.json?app_id={API_KEY}&ba
 
 var httpClient = new HttpClient();
 var apiRequestWrapper = new APIRequestWrapper(httpClient);
+var exchangeApiClient = new ExchangeAPIClient(apiRequestWrapper, API_KEY);
 
-Task<string> resTask = apiRequestWrapper.GetAsync(url); // URL만 전달
-string res = await resTask; // await 키워드 추가
-Console.WriteLine($"Result: {res}"); // 결과 앞에 "Result: " 추가
+var data = await exchangeApiClient.GetExchangeRateDataAsync();
 
-ExchangeRateData? data = JsonSerializer.Deserialize<ExchangeRateData>(res);
 if (data != null)
 {
     Console.WriteLine($"Timestamp: {data.Timestamp}");
