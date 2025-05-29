@@ -1,12 +1,19 @@
+using ExchangeRateNotifierWorkerService.Utils;
+
 namespace ExchangeRateNotifierWorkerService;
 
 public class Worker : BackgroundService
 {
-    private readonly ILogger<Worker> _logger;
+    private readonly Logger _logger;
 
-    public Worker(ILogger<Worker> logger)
+    public Worker(IConfiguration configuration)
     {
-        _logger = logger;
+        if (null == configuration)
+        {
+            throw new ArgumentNullException(nameof(configuration));
+        }
+        string serviceName = configuration["Logging:ServiceName"];
+        _logger = new Logger(serviceName);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
