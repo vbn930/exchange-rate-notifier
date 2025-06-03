@@ -57,20 +57,14 @@ namespace ExchangeRateNotifierWorkerService.Clients
 
         private async Task HandleInteractionAsync(SocketInteraction interaction)
         {
-            using var log = _logger.StartMethod(nameof(HandleInteractionAsync));
-            try
-            {
+            using(var log = _logger.StartMethod(nameof(HandleInteractionAsync))){
                 var context = new SocketInteractionContext(_client, interaction);
                 await _interactions.ExecuteCommandAsync(context, _services);
-            }
-            catch (Exception ex)
-            {
-                log.HandleException(ex);
                 if (interaction.Type == InteractionType.ApplicationCommand)
                 {
                     await interaction.RespondAsync("⚠️ An error occurred while processing a slash instruction.", ephemeral: true);
                 }
-            }
+            };
         }
 
         public async Task StartClientAsync(string token)
@@ -99,33 +93,22 @@ namespace ExchangeRateNotifierWorkerService.Clients
         {
             using (var log = _logger.StartMethod(nameof(MessageReceivedAsync)))
             {
-                try
+                if (!(messageParam is SocketUserMessage message)) return;
+                if (message.Author.IsBot) return;
+
+                log.SetAttribute("client.received-message", message.Content);
+
+                int argPos = 0;
+                if (!message.HasCharPrefix('!', ref argPos))
                 {
-                    if (!(messageParam is SocketUserMessage message)) return;
-                    if (message.Author.IsBot) return;
-
-                    log.SetAttribute("client.received-message", message.Content);
-
-                    int argPos = 0;
-                    if (!message.HasCharPrefix('!', ref argPos))
-                    {
-                        throw new Exception("Prefix not found.");
-                    }
-
-                    var context = new SocketCommandContext(_client, message);
-                    var result = await _commands.ExecuteAsync(context, argPos, _services);
-                    if (!result.IsSuccess)
-                    {
-                        log.SetAttribute("client.error", result.ErrorReason);
-                    }
+                    throw new Exception("Prefix not found.");
                 }
-                catch (UserErrorException e)
+
+                var context = new SocketCommandContext(_client, message);
+                var result = await _commands.ExecuteAsync(context, argPos, _services);
+                if (!result.IsSuccess)
                 {
-                    log.LogUserError(e.Message);
-                }
-                catch (Exception e)
-                {
-                    log.HandleException(e);
+                    log.SetAttribute("client.error", result.ErrorReason);
                 }
             }
         }
